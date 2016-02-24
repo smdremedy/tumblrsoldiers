@@ -2,8 +2,17 @@ package com.soldiersofmobile.tumblrviewer;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
+import java.util.List;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -34,13 +43,44 @@ public class PostsListFragment extends ListFragment {
         builder.setEndpoint("http://api.tumblr.com");
         RestAdapter restAdapter = builder.build();
         TumblrApi tumblrApi = restAdapter.create(TumblrApi.class);
-        tumblrApi.getTumblrPosts("wehavethemunchies",
+        tumblrApi.getTumblrPosts(getArguments().getString(BLOG_NAME_ARG),
                 "fD0HOvNDa2z10uyozPZNnjeb4fEFGVGm58zttH6cXSe4K0qC64", 10, 0, new Callback<TumblrResponse>() {
 
             @Override
             public void success(TumblrResponse tumblrResponse, Response response) {
 
                 Log.d("TAG", tumblrResponse.toString());
+
+                ArrayAdapter<Post> postArrayAdapter = new ArrayAdapter<Post>(getContext(),
+                        R.layout.post_item, R.id.itemTextView, tumblrResponse.getResponse().getPosts()) {
+
+                    @Override
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        View view = super.getView(position, convertView, parent);
+                        TextView itemTextView = (TextView) view.findViewById(R.id.itemTextView);
+
+                        ImageView itemImageView = (ImageView) view.findViewById(R.id.itemImageView);
+
+                        Post post = getItem(position);
+
+                        itemTextView.setText(Html.fromHtml(post.getCaption()));
+
+                        List<Photo> photos = post.getPhotos();
+
+                        if(!photos.isEmpty()) {
+
+                            Glide.with(PostsListFragment.this)
+                                    .load(photos.get(0).getOriginalSize().getUrl())
+                                    .into(itemImageView);
+                        }
+
+
+                        return view;
+                    }
+                };
+
+                setEmptyText("No data");
+                setListAdapter(postArrayAdapter);
 
             }
 
