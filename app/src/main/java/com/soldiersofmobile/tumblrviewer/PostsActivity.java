@@ -1,8 +1,11 @@
 package com.soldiersofmobile.tumblrviewer;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -14,7 +17,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class PostsActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, PostsListFragment.PostCallback {
+
+    public static final String URL = "url";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +74,9 @@ public class PostsActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            CloseDialogFragment dialogFragment = new CloseDialogFragment();
+            dialogFragment.show(fragmentTransaction, "close_dialog");
             return true;
         }
 
@@ -95,5 +103,20 @@ public class PostsActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void openPost(String url) {
+
+        if (findViewById(R.id.secondPanelContainer) == null) {
+            Intent intent = new Intent(this, PostDetailsActivity.class);
+            intent.putExtra(URL, url);
+            startActivity(intent);
+        } else {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.secondPanelContainer, DetailsFragment.newInstance(url))
+                    .commit();
+        }
+
     }
 }

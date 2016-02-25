@@ -1,5 +1,6 @@
 package com.soldiersofmobile.tumblrviewer;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.text.Html;
@@ -8,15 +9,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
+import com.jakewharton.retrofit.Ok3Client;
 
 import java.util.List;
 
+import okhttp3.OkHttpClient;
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 /**
@@ -25,6 +31,9 @@ import retrofit.client.Response;
 public class PostsListFragment extends ListFragment {
 
     public static final String BLOG_NAME_ARG = "blog_name";
+    private ArrayAdapter<Post> postArrayAdapter;
+
+    private PostCallback callback;
 
     public static PostsListFragment newInstance(String blogName) {
 
@@ -36,11 +45,28 @@ public class PostsListFragment extends ListFragment {
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        callback = (PostCallback) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        callback = null;
+    }
+
+    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         RestAdapter.Builder builder = new RestAdapter.Builder();
         builder.setEndpoint("http://api.tumblr.com");
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
+
+        builder.setClient(new Ok3Client(okHttpClient));
         RestAdapter restAdapter = builder.build();
         TumblrApi tumblrApi = restAdapter.create(TumblrApi.class);
         tumblrApi.getTumblrPosts(getArguments().getString(BLOG_NAME_ARG),
@@ -51,7 +77,7 @@ public class PostsListFragment extends ListFragment {
 
                 Log.d("TAG", tumblrResponse.toString());
 
-                ArrayAdapter<Post> postArrayAdapter = new ArrayAdapter<Post>(getContext(),
+                postArrayAdapter = new ArrayAdapter<Post>(getContext(),
                         R.layout.post_item, R.id.itemTextView, tumblrResponse.getResponse().getPosts()) {
 
                     @Override
@@ -89,5 +115,19 @@ public class PostsListFragment extends ListFragment {
 
             }
         });
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+
+        Post post = postArrayAdapter.getItem(position);
+        
+        callback.openPost(post.getPostUrl());
+
+    }
+
+    interface PostCallback {
+        void openPost(String url);
     }
 }
