@@ -13,16 +13,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.facebook.stetho.okhttp3.StethoInterceptor;
-import com.jakewharton.retrofit.Ok3Client;
+import com.soldiersofmobile.tumblrviewer.events.OpenUrlEvent;
 
 import java.util.List;
 
-import okhttp3.OkHttpClient;
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
-import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 /**
@@ -62,11 +59,6 @@ public class PostsListFragment extends ListFragment {
 
         RestAdapter.Builder builder = new RestAdapter.Builder();
         builder.setEndpoint("http://api.tumblr.com");
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .addNetworkInterceptor(new StethoInterceptor())
-                .build();
-
-        builder.setClient(new Ok3Client(okHttpClient));
         RestAdapter restAdapter = builder.build();
         TumblrApi tumblrApi = restAdapter.create(TumblrApi.class);
         tumblrApi.getTumblrPosts(getArguments().getString(BLOG_NAME_ARG),
@@ -90,6 +82,7 @@ public class PostsListFragment extends ListFragment {
                         Post post = getItem(position);
 
                         itemTextView.setText(Html.fromHtml(post.getCaption()));
+
 
                         List<Photo> photos = post.getPhotos();
 
@@ -124,6 +117,7 @@ public class PostsListFragment extends ListFragment {
         Post post = postArrayAdapter.getItem(position);
         
         callback.openPost(post.getPostUrl());
+        App.bus.post(new OpenUrlEvent(post.getPostUrl()));
 
     }
 

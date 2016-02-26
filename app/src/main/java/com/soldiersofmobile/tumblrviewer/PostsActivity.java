@@ -16,6 +16,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.soldiersofmobile.tumblrviewer.events.OpenUrlEvent;
+import com.squareup.otto.Produce;
+import com.squareup.otto.Subscribe;
+
 public class PostsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, PostsListFragment.PostCallback {
 
@@ -108,13 +112,32 @@ public class PostsActivity extends AppCompatActivity
     @Override
     public void openPost(String url) {
 
+
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        App.bus.register(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        App.bus.unregister(this);
+    }
+
+    @Subscribe
+    public void onOpenUrlEvent(OpenUrlEvent event) {
+
         if (findViewById(R.id.secondPanelContainer) == null) {
             Intent intent = new Intent(this, PostDetailsActivity.class);
-            intent.putExtra(URL, url);
+            intent.putExtra(URL, event.url);
             startActivity(intent);
         } else {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.secondPanelContainer, DetailsFragment.newInstance(url))
+                    .replace(R.id.secondPanelContainer, DetailsFragment.newInstance(event.url))
                     .commit();
         }
 
